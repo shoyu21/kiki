@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiki - UFH Infusion Calculator</title>
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --surface-alt: #F0F2F5;
+    --border: #E2E5EA;
+    --border-focus: #3B6ECC;
+    --text: #1A1D23;
+    --text-secondary: #5A6170;
+    --text-muted: #8B92A0;
+
+    /* Initiation theme: teal-green (cool, calm = new start) */
+    --init: #1B7A6E;
+    --init-light: #E6F5F2;
+    --init-mid: #C0E6DF;
+    --init-dark: #145E55;
+
+    /* Adjustment theme: deep navy-indigo (warm alertness = change) */
+    --adj: #5B4FC7;
+    --adj-light: #EFEDFB;
+    --adj-mid: #D5D0F5;
+    --adj-dark: #453BA3;
+
+    /* Protocol tabs */
+    --accent-low: #2E7D6F;
+    --accent-low-light: #E8F5F1;
+    --accent-ther: #3B6ECC;
+    --accent-ther-light: #E8F0FF;
+
+    --warning: #C4700A;
+    --warning-bg: #FFF8EC;
+    --warning-border: #F5D89A;
+    --danger: #C0392B;
+    --danger-bg: #FDEDEB;
+    --danger-border: #F5B7B1;
+    --success: #1E8449;
+    --success-bg: #EAFAF1;
+    --info-bg: #EBF5FB;
+    --info-border: #AED6F1;
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --transition: 0.2s ease;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    min-height: 100vh; -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 16px 20px; text-align: center; position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header h1 span { font-weight: 400; color: var(--text-secondary); }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Protocol Tabs ── */
+  .tab-bar {
+    display: flex; gap: 4px; padding: 12px 16px 0;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 8px; border: none; background: transparent;
+    font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer;
+    border-bottom: 2.5px solid transparent; transition: var(--transition);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+  .tab-btn:hover { color: var(--text-secondary); background: var(--surface-alt); }
+  .tab-btn.active[data-tab="low"] { color: var(--accent-low); border-bottom-color: var(--accent-low); background: var(--accent-low-light); }
+  .tab-btn.active[data-tab="ther"] { color: var(--accent-ther); border-bottom-color: var(--accent-ther); background: var(--accent-ther-light); }
+  .tab-target { font-size: 11px; display: block; font-weight: 400; margin-top: 1px; color: var(--text-muted); }
+  .tab-btn.active .tab-target { color: inherit; opacity: 0.8; }
+
+  /* ── Main ── */
+  .main { padding: 16px; max-width: 540px; margin: 0 auto; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary); margin-bottom: 12px;
+  }
+
+  /* ── Form ── */
+  .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .input-group { flex: 1; display: flex; flex-direction: column; }
+  .input-group label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .input-group input {
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 15px; font-family: inherit; color: var(--text); background: var(--surface);
+    transition: var(--transition); width: 100%;
+  }
+  .input-group input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59,110,204,0.12); }
+  .input-group input::placeholder { color: var(--text-muted); }
+  .input-unit { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Sex Toggle ── */
+  .sex-toggle { display: flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .sex-toggle button {
+    flex: 1; padding: 9px 8px; border: none; background: var(--surface);
+    font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: var(--transition);
+  }
+  .sex-toggle button.active { background: var(--accent-ther); color: white; }
+  .sex-toggle button:not(:last-child) { border-right: 1px solid var(--border); }
+
+  /* ── Mode Toggle ── */
+  .mode-toggle { display: flex; gap: 8px; }
+  .mode-btn {
+    flex: 1; padding: 12px 10px; border: 2.5px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); font-size: 14px; font-weight: 700; color: var(--text-muted);
+    cursor: pointer; transition: var(--transition); text-align: center; position: relative;
+  }
+  .mode-btn:hover { border-color: var(--text-muted); }
+  .mode-btn.sel-init {
+    border-color: var(--init); background: var(--init-light); color: var(--init);
+  }
+  .mode-btn.sel-adj {
+    border-color: var(--adj); background: var(--adj-light); color: var(--adj);
+  }
+  .mode-label { font-size: 11px; font-weight: 400; display: block; margin-top: 2px; }
+  .mode-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  /* ── BMI Banner ── */
+  .bmi-banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 10px; display: none; line-height: 1.4; }
+  .bmi-banner.normal { background: var(--success-bg); border: 1px solid #A9DFBF; color: var(--success); }
+  .bmi-banner.obese { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .bmi-banner .bmi-val { font-weight: 700; }
+
+  /* ── aPTT + Current Rate Section ── */
+  .adjust-inputs { display: none; margin-top: 12px; }
+  .adjust-inputs.visible { display: block; animation: fadeIn 0.2s ease; }
+
+  /* ── Animations ── */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+  /* ═══════════════════════════════════════════
+     MONITORING POP BANNER
+     ═══════════════════════════════════════════ */
+  .monitor-pop {
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+    text-align: center; animation: popIn 0.3s ease; box-shadow: var(--shadow-md);
+    color: white;
+  }
+  .monitor-pop.init-theme { background: linear-gradient(135deg, var(--init) 0%, #24917F 100%); }
+  .monitor-pop.adj-theme { background: linear-gradient(135deg, var(--adj) 0%, #7168D4 100%); }
+  .monitor-pop .monitor-text { font-size: 17px; font-weight: 800; letter-spacing: 0.3px; }
+  .monitor-pop .monitor-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; font-weight: 500; }
+
+  /* ═══════════════════════════════════════════
+     MODE BADGE (persistent identifier)
+     ═══════════════════════════════════════════ */
+  .mode-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .mode-badge.init-badge { background: var(--init-mid); color: var(--init-dark); }
+  .mode-badge.adj-badge { background: var(--adj-mid); color: var(--adj-dark); }
+
+  /* ═══════════════════════════════════════════
+     PUMP DISPLAY CARD
+     ═══════════════════════════════════════════ */
+  .pump-card {
+    background: var(--surface); border-radius: var(--radius); margin-bottom: 12px;
+    box-shadow: var(--shadow); overflow: hidden; animation: fadeIn 0.3s ease;
+  }
+  .pump-card.init-border { border: 2px solid var(--init); }
+  .pump-card.adj-border { border: 2px solid var(--adj); }
+
+  .pump-card-header {
+    padding: 10px 16px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; color: white;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pump-card-header.init-bg { background: var(--init); }
+  .pump-card-header.adj-bg { background: var(--adj); }
+
+  .pump-display { display: flex; border-bottom: 1px solid var(--border); }
+  .pump-cell {
+    flex: 1; padding: 14px 10px; text-align: center; border-right: 1px solid var(--border);
+  }
+  .pump-cell:last-child { border-right: none; }
+  .pump-cell-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 2px;
+  }
+  /* PRIMARY: the value the clinician prescribes */
+  .pump-primary {
+    font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1.1;
+  }
+  .pump-primary.init-text { color: var(--init); }
+  .pump-primary.adj-text { color: var(--adj); }
+  .pump-primary-unit {
+    font-size: 12px; font-weight: 700; margin-top: 2px;
+  }
+  .pump-primary-unit.init-text { color: var(--init); }
+  .pump-primary-unit.adj-text { color: var(--adj); }
+
+  /* SECONDARY: the pump programming value */
+  .pump-secondary {
+    margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border);
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  }
+  .pump-secondary-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted);
+  }
+
+  /* ── Detail rows ── */
+  .detail-rows { padding: 10px 16px 14px; }
+  .detail-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; }
+  .detail-row:not(:last-child) { border-bottom: 1px dashed var(--border); }
+  .detail-label { font-size: 12px; color: var(--text-secondary); }
+  .detail-value { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; }
+  .detail-value .sub { font-size: 11px; font-weight: 400; color: var(--text-muted); display: block; }
+
+  /* ── Adjustment action banner ── */
+  .adjust-action-banner {
+    padding: 12px 16px; border-radius: var(--radius-sm); margin: 0 0 10px;
+    font-size: 15px; font-weight: 700; text-align: center; animation: popIn 0.25s ease;
+  }
+  .adjust-action-banner.increase { background: var(--info-bg); border: 1px solid var(--info-border); color: #1A5276; }
+  .adjust-action-banner.maintain { background: var(--success-bg); border: 1px solid #A9DFBF; color: var(--success); }
+  .adjust-action-banner.decrease { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .adjust-action-banner.stop { background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger); }
+
+  /* ── New Rate Result Card ── */
+  .new-rate-card {
+    background: var(--adj-light); border: 2px solid var(--adj);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+    text-align: center; animation: popIn 0.3s ease;
+  }
+  .new-rate-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--adj);
+  }
+  .new-rate-value {
+    font-size: 34px; font-weight: 800; color: var(--adj-dark); letter-spacing: -1px;
+  }
+  .new-rate-unit { font-size: 13px; font-weight: 700; color: var(--adj); }
+  .new-rate-secondary { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .new-rate-from {
+    font-size: 12px; color: var(--text-muted); margin-top: 6px;
+    padding-top: 6px; border-top: 1px dashed var(--adj-mid);
+  }
+
+  /* ── Cap note ── */
+  .cap-note {
+    background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning);
+    padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+    text-align: center; margin: 6px 16px 0;
+  }
+
+  /* ── Safety notes ── */
+  .safety-note {
+    padding: 10px 12px; border-radius: var(--radius-sm); font-size: 12px; line-height: 1.5; margin: 8px 0;
+  }
+  .safety-note.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: #7D4E00; }
+  .safety-note strong { font-weight: 700; }
+
+  /* ── Placeholder ── */
+  .results-placeholder {
+    text-align: center; padding: 24px 16px; color: var(--text-muted); font-size: 14px;
+  }
+  .results-placeholder .ph-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+
+  /* ── Info expandable ── */
+  .info-expand { margin-top: 12px; }
+  .info-expand summary {
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    cursor: pointer; padding: 8px 0; list-style: none; display: flex; align-items: center; gap: 6px;
+  }
+  .info-expand summary::before {
+    content: '+'; display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; background: var(--surface-alt);
+    font-size: 14px; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+  }
+  .info-expand[open] summary::before { content: '\2212'; }
+  .info-expand .info-content { font-size: 12px; color: var(--text-secondary); padding: 8px 0 4px 24px; line-height: 1.6; }
+  .info-content p { margin-bottom: 6px; }
+
+  /* ── Ref table ── */
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .ref-table th {
+    background: var(--surface-alt); padding: 8px 6px; text-align: left; font-weight: 700;
+    color: var(--text-secondary); border-bottom: 2px solid var(--border);
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .ref-table td { padding: 7px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .ref-table tr.hl td { background: #FFFDE7; font-weight: 600; }
+
+  .dilution-info {
+    background: var(--surface-alt); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-top: 8px;
+  }
+  .dilution-info strong { color: var(--text); }
+
+  .footer { text-align: center; padding: 20px 16px 32px; font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+
+  @media (max-width: 380px) {
+    .input-row { flex-direction: column; gap: 8px; }
+    .pump-primary { font-size: 24px; }
+    .new-rate-value { font-size: 28px; }
+  }
+
+  /* ═══════════════════════════════════════════
+     ACTION PLAN (step-by-step output)
+     ═══════════════════════════════════════════ */
+  .action-plan {
+    background: var(--surface); border-radius: var(--radius);
+    margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden;
+    animation: fadeIn 0.3s ease;
+  }
+  .action-plan.init-border { border: 2px solid var(--init); }
+  .action-plan.adj-border  { border: 2px solid var(--adj); }
+
+  .ap-header {
+    padding: 10px 16px; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.3px; color: white;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .ap-header.init-bg { background: var(--init); }
+  .ap-header.adj-bg  { background: var(--adj); }
+
+  .plan-section {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+  .plan-section.no-border { border-bottom: none; }
+
+  .ptl {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; padding: 3px 9px; border-radius: 20px;
+    display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px;
+  }
+  .ptl-now   { background: #1A1D23; color: #FFFFFF; }
+  .ptl-later { background: #FFF0D0; color: #8A5000; border: 1.5px solid #FFC866; font-weight: 800; }
+
+  .plan-step { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 12px; }
+  .plan-step:last-child { margin-bottom: 0; }
+
+  .sn {
+    min-width: 28px; height: 28px; border-radius: 50%;
+    font-size: 13px; font-weight: 800; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; margin-top: 2px; color: white;
+  }
+  .sn-now   { background: #1A1D23; }
+  .sn-later { background: var(--text-muted); }
+
+  .step-body { flex: 1; min-width: 0; }
+
+  .step-verb { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .sv-stop     { color: var(--danger); }
+  .sv-increase { color: #1A5276; }
+  .sv-decrease { color: var(--warning); }
+  .sv-maintain { color: var(--success); }
+  .sv-later    { color: var(--text-secondary); }
+
+  .step-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+
+  /* ── Rate Hero: the most prominent output ── */
+  .rate-hero { border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 8px; }
+  .rh-init     { background: var(--init-light); border: 1.5px solid var(--init-mid); }
+  .rh-adj      { background: var(--adj-light);  border: 1.5px solid var(--adj-mid); }
+  .rh-maintain { background: var(--success-bg); border: 1.5px solid #A9DFBF; }
+
+  .rh-val { font-size: 46px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .rh-init .rh-val     { color: var(--init); }
+  .rh-adj  .rh-val     { color: var(--adj); }
+  .rh-maintain .rh-val { color: var(--success); }
+
+  .rh-unit { font-size: 14px; font-weight: 700; margin-top: 3px; }
+  .rh-init .rh-unit     { color: var(--init-dark); }
+  .rh-adj  .rh-unit     { color: var(--adj-dark); }
+  .rh-maintain .rh-unit { color: var(--success); }
+
+  .rh-pump {
+    font-size: 15px; font-weight: 600; color: var(--text-secondary);
+    margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--border);
+  }
+  .rh-from { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ── Bolus box ── */
+  .bolus-box {
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 7px;
+  }
+  .bb-val  { font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+  .bb-unit { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+  .bb-sub  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ── Rate hint (no current rate entered) ── */
+  .rate-hint {
+    background: var(--warning-bg); border: 1px solid var(--warning-border);
+    border-radius: var(--radius-sm); padding: 9px 12px; margin-top: 7px;
+    font-size: 12px; color: var(--warning); font-weight: 600;
+  }
+  .rh-delta { font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px; }
+
+  /* ── Calc details ── */
+  details.plan-calc { border-top: 1px solid var(--border); }
+  details.plan-calc > summary {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    cursor: pointer; padding: 10px 16px; list-style: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  details.plan-calc > summary::before {
+    content: '+'; display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%; background: var(--surface-alt);
+    font-size: 12px; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+  }
+  details.plan-calc[open] > summary::before { content: '\2212'; }
+  .plan-calc-inner { padding: 0 16px 12px; }
+
+  /* ── Copy to spreadsheet button ── */
+  .copy-row-wrap { padding: 8px 16px 14px; border-top: 1px solid var(--border); }
+  .copy-sheet-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 9px 14px; border-radius: var(--radius-sm);
+    background: var(--surface-alt); border: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    cursor: pointer; transition: var(--transition);
+  }
+  .copy-sheet-btn:hover { background: var(--border); color: var(--text); }
+  .copy-sheet-btn.copied { background: var(--success-bg); border-color: #A9DFBF; color: var(--success); }
+
+  /* ── Recheck aPTT step — pop highlight ── */
+  .recheck-pop {
+    font-size: 17px; font-weight: 800;
+    background: #FFF0D0; color: #8A5000;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid #FFC866;
+    display: inline-block; margin-top: 4px; line-height: 1.3;
+  }
+  .recheck-daily {
+    font-size: 17px; font-weight: 800;
+    background: var(--success-bg); color: var(--success);
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid #A9DFBF;
+    display: inline-block; margin-top: 4px; line-height: 1.3;
+  }
+
+  /* ── Consecutive MAINTAIN daily badge ── */
+  .daily-note {
+    margin-top: 5px; font-size: 11px; font-weight: 700;
+    color: var(--success); background: var(--success-bg);
+    border: 1px solid #A9DFBF; border-radius: var(--radius-sm);
+    padding: 4px 8px; display: inline-block;
+  }
+
+  /* ── Obesity height reveal ── */
+  .obesity-prompt {
+    background: var(--warning-bg); border: 1px solid var(--warning-border);
+    border-radius: var(--radius-sm); padding: 8px 12px;
+    font-size: 12px; color: var(--warning); margin-bottom: 8px;
+  }
+
+  /* ── Prev maintain row ── */
+  .prev-maintain-row {
+    margin-top: 10px; padding: 9px 12px;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); display: flex; align-items: flex-start; gap: 8px;
+  }
+  .prev-maintain-row input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; cursor: pointer; flex-shrink: 0; }
+  .prev-maintain-row label { font-size: 12px; color: var(--text-secondary); cursor: pointer; line-height: 1.4; }
+
+  @media (max-width: 380px) {
+    .rh-val { font-size: 38px; }
+    .bb-val { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Kiki <span>UFH Calculator</span></h1>
+  <div class="header-sub">NUH Unfractionated Heparin Protocol</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="low" onclick="switchTab('low')">Low Dose<span class="tab-target">aPTT 45 &ndash; 60 s</span></button>
+  <button class="tab-btn" data-tab="ther" onclick="switchTab('ther')">Therapeutic Dose<span class="tab-target">aPTT 55 &ndash; 75 s</span></button>
+</div>
+
+<div class="main">
+
+  <!-- Patient Input -->
+  <div class="card">
+    <div class="card-title">Patient Details</div>
+    <div class="input-row" style="margin-bottom:0;">
+      <div class="input-group">
+        <label for="weight">Weight</label>
+        <input type="number" id="weight" placeholder="e.g. 70" step="0.1" min="20" max="300" inputmode="decimal">
+        <span class="input-unit">kg (actual body weight)</span>
+      </div>
+    </div>
+
+    <!-- Height + Sex: shown only when weight ≥ 100 kg (possible obesity) -->
+    <div id="height-sex-row" style="display:none;margin-top:10px;">
+      <div class="obesity-prompt">⚠️ Weight ≥ 100 kg — enter height to check if Adjusted Body Weight (ABW) is needed for dosing</div>
+      <div class="input-row">
+        <div class="input-group">
+          <label for="height">Height</label>
+          <input type="number" id="height" placeholder="e.g. 165" step="0.1" min="100" max="220" inputmode="decimal">
+          <span class="input-unit">cm</span>
+        </div>
+        <div class="input-group">
+          <label>Sex <span style="font-weight:400;color:var(--text-muted)">(for ABW)</span></label>
+          <div class="sex-toggle">
+            <button id="sex-m" class="active" onclick="setSex('M')">Male</button>
+            <button id="sex-f" onclick="setSex('F')">Female</button>
+          </div>
+        </div>
+      </div>
+      <div class="bmi-banner" id="bmi-banner"></div>
+    </div>
+  </div>
+
+  <!-- Mode Selection -->
+  <div class="card">
+    <div class="card-title">Mode</div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="mode-init" onclick="setMode('init')">
+        <span class="mode-icon">🚀</span>
+        Initiate
+        <span class="mode-label">Start new infusion</span>
+      </button>
+      <button class="mode-btn" id="mode-adjust" onclick="setMode('adjust')">
+        <span class="mode-icon">🔄</span>
+        Adjust
+        <span class="mode-label">Titrate existing</span>
+      </button>
+    </div>
+
+    <!-- Adjustment-specific inputs -->
+    <div class="adjust-inputs" id="adjust-inputs">
+      <div class="input-row" style="margin-top:0;">
+        <div class="input-group">
+          <label for="aptt">Current aPTT</label>
+          <input type="number" id="aptt" placeholder="e.g. 52" step="1" min="15" max="300" inputmode="numeric">
+          <span class="input-unit">seconds</span>
+        </div>
+        <div class="input-group">
+          <label for="current-rate">Current Rate</label>
+          <input type="number" id="current-rate" placeholder="e.g. 12" step="0.1" min="0" max="100" inputmode="decimal">
+          <span class="input-unit">unit/kg/hr</span>
+        </div>
+      </div>
+      <div class="prev-maintain-row">
+        <input type="checkbox" id="prev-maintain" onchange="setPrevMaintain(this.checked)">
+        <label for="prev-maintain">Previous aPTT check was also ✅ <strong>MAINTAIN</strong> (rate unchanged) — 2nd consecutive reading in target range → protocol allows switching to <strong>daily</strong> aPTT</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- REACTIVE RESULTS -->
+  <div id="results-area">
+    <div class="results-placeholder" id="placeholder">
+      <div class="ph-icon">&#8595;</div>
+      <div>Enter patient details and select a mode</div>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <!-- Reference -->
+  <div class="card" style="margin-top:4px;">
+    <details class="info-expand">
+      <summary>Heparin Dilution Reference</summary>
+      <div class="info-content">
+        <div class="dilution-info">
+          <strong>Preparation:</strong> Use 5000 units/mL preparation<br>
+          Dilute <strong>1 mL</strong> in <strong>49 mL</strong> NS or D5W<br>
+          = <strong>5,000 units in 50 mL</strong> = <strong>100 units/mL</strong><br><br>
+          <strong>Bolus:</strong> Use undiluted 5000 units/mL<br>
+          Volume (mL) = prescribed units / 5000<br><br>
+          Discard diluted solution 24 hours after preparation.
+        </div>
+      </div>
+    </details>
+    <details class="info-expand">
+      <summary id="ref-table-title">Low Dose aPTT Adjustment Table</summary>
+      <div class="info-content" style="padding-left:0;" id="ref-table-container"></div>
+    </details>
+    <details class="info-expand">
+      <summary>Monitoring Reminders</summary>
+      <div class="info-content">
+        <p><strong>Baseline:</strong> FBC, PT/aPTT before starting (if not done within 72h).</p>
+        <p><strong>aPTT &gt;40s at baseline:</strong> Check with doctor before starting.</p>
+        <p><strong>First aPTT:</strong> 6 hours after initiating infusion.</p>
+        <p><strong>FBC:</strong> 48h after starting, then every 2-3 days up to 14 days (HIT surveillance).</p>
+        <p><strong>Blood sampling:</strong> Do NOT draw aPTT from same limb receiving heparin.</p>
+        <p><strong>Major bleeding:</strong> Stop infusion, check aPTT immediately.</p>
+      </div>
+    </details>
+    <details class="info-expand">
+      <summary>About Adjusted Body Weight</summary>
+      <div class="info-content">
+        <p>For BMI &gt;40, adjusted body weight (ABW) avoids supratherapeutic dosing.</p>
+        <p><strong>ABW</strong> = IBW + 0.4 x (Actual - IBW)</p>
+        <p><strong>IBW (Devine):</strong><br>Male: 50 + 2.3 x (height in inches - 60)<br>Female: 45.5 + 2.3 x (height in inches - 60)</p>
+        <p>EPIC auto-calculates ABW for height &gt;152 cm. For height &lt;=152 cm, contact Pharmacy.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="footer">
+    <strong>Kiki v0.5</strong> &mdash; Clinical Decision Support Tool<br>
+    Based on NUH UFH IV Infusion Protocol<br>
+    Therapeutic revised May 2025 | Low Dose revised Mar 2023<br><br>
+    Assists calculation only. Verify with institutional protocol.<br>
+    Clinical judgement supersedes all automated outputs. Not for rTPA protocols.
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+const state = { tab: 'low', sex: 'M', mode: null, prevMaintain: false };
+
+// ================================================================
+//  PROTOCOLS
+// ================================================================
+const PROTOCOLS = {
+  low: {
+    name: 'Low Dose', target: 'aPTT 45\u201360 s',
+    bolusPerKg: 70, bolusMax: 4000, startRate: 10,
+    concentration: 100, bolusConc: 5000,
+    adjustments: [
+      { min:0,   max:35,  bolus:70, bolusMax:3000, stop:0,  rc:+2, hrs:6, cls:'increase', lbl:'💉 BOLUS + ⬆️ INCREASE rate by 2 unit/kg/hr' },
+      { min:35,  max:45,  bolus:0,  bolusMax:0,    stop:0,  rc:+1, hrs:6, cls:'increase', lbl:'⬆️ INCREASE rate by 1 unit/kg/hr' },
+      { min:45,  max:60,  bolus:0,  bolusMax:0,    stop:0,  rc:0,  hrs:6, cls:'maintain',  lbl:'✅ MAINTAIN current infusion rate' },
+      { min:60,  max:70,  bolus:0,  bolusMax:0,    stop:0,  rc:-1, hrs:6, cls:'decrease', lbl:'⬇️ REDUCE rate by 1 unit/kg/hr' },
+      { min:70,  max:85,  bolus:0,  bolusMax:0,    stop:30, rc:-2, hrs:6, cls:'stop',     lbl:'⏸️ HOLD 30 min then ⬇️ REDUCE by 2 unit/kg/hr' },
+      { min:85,  max:170, bolus:0,  bolusMax:0,    stop:60, rc:-3, hrs:4, cls:'stop',     lbl:'🛑 HOLD 60 min then ⬇️ REDUCE by 3 unit/kg/hr' },
+      { min:170, max:999, bolus:0,  bolusMax:0,    stop:60, rc:-3, hrs:4, cls:'stop',     lbl:'🛑 HOLD 60 min then ⬇️ REDUCE by 3 unit/kg/hr' },
+    ],
+    tableRows: [
+      ['< 35','70 u/kg (max 3000)','\u2014','+2 u/kg/hr','6 hrs'],
+      ['35 to <45','\u2014','\u2014','+1 u/kg/hr','6 hrs'],
+      ['45 to 60','\u2014','\u2014','Maintain','6 hrs*'],
+      ['>60 to 70','\u2014','\u2014','\u22121 u/kg/hr','6 hrs'],
+      ['>70 to 85','\u2014','30 min','\u22122 u/kg/hr','6 hrs'],
+      ['>85 to 170','\u2014','60 min','\u22123 u/kg/hr','4 hrs'],
+      ['>170','\u2014','60 min','\u22123 u/kg/hr','4 hrs'],
+    ]
+  },
+  ther: {
+    name: 'Therapeutic Dose', target: 'aPTT 55\u201375 s',
+    bolusPerKg: 70, bolusMax: 4000, startRate: 15,
+    concentration: 100, bolusConc: 5000,
+    adjustments: [
+      { min:0,   max:40,  bolus:70, bolusMax:3000, stop:0,  rc:+2, hrs:6, cls:'increase', lbl:'💉 BOLUS + ⬆️ INCREASE rate by 2 unit/kg/hr' },
+      { min:40,  max:55,  bolus:0,  bolusMax:0,    stop:0,  rc:+1, hrs:6, cls:'increase', lbl:'⬆️ INCREASE rate by 1 unit/kg/hr' },
+      { min:55,  max:75,  bolus:0,  bolusMax:0,    stop:0,  rc:0,  hrs:6, cls:'maintain',  lbl:'✅ MAINTAIN current infusion rate' },
+      { min:75,  max:95,  bolus:0,  bolusMax:0,    stop:0,  rc:-1, hrs:6, cls:'decrease', lbl:'⬇️ REDUCE rate by 1 unit/kg/hr' },
+      { min:95,  max:105, bolus:0,  bolusMax:0,    stop:30, rc:-2, hrs:6, cls:'stop',     lbl:'⏸️ HOLD 30 min then ⬇️ REDUCE by 2 unit/kg/hr' },
+      { min:105, max:170, bolus:0,  bolusMax:0,    stop:60, rc:-3, hrs:4, cls:'stop',     lbl:'🛑 HOLD 60 min then ⬇️ REDUCE by 3 unit/kg/hr' },
+      { min:170, max:999, bolus:0,  bolusMax:0,    stop:60, rc:-3, hrs:4, cls:'stop',     lbl:'🛑 HOLD 60 min then ⬇️ REDUCE by 3 unit/kg/hr' },
+    ],
+    tableRows: [
+      ['< 40','70 u/kg (max 3000)','\u2014','+2 u/kg/hr','6 hrs'],
+      ['40 to <55','\u2014','\u2014','+1 u/kg/hr','6 hrs'],
+      ['55 to 75','\u2014','\u2014','Maintain','6 hrs*'],
+      ['>75 to 95','\u2014','\u2014','\u22121 u/kg/hr','6 hrs'],
+      ['>95 to 105','\u2014','30 min','\u22122 u/kg/hr','6 hrs'],
+      ['>105 to 170','\u2014','60 min','\u22123 u/kg/hr','4 hrs'],
+      ['>170','\u2014','60 min','\u22123 u/kg/hr','4 hrs'],
+    ]
+  }
+};
+
+// ================================================================
+//  WEIGHT
+// ================================================================
+function calcBMI(w,h){ return w/((h/100)**2); }
+function calcIBW(sex,h){ const i=h/2.54; return sex==='M'? 50+2.3*(i-60) : 45.5+2.3*(i-60); }
+function getDosingWeight(w,h,sex){
+  if(!h||h<100) return {weight:w,bmi:null,isObese:false,ibw:null};
+  const bmi=calcBMI(w,h);
+  if(bmi>40){ const ibw=calcIBW(sex,h); return {weight:ibw+0.4*(w-ibw),bmi,isObese:true,ibw}; }
+  return {weight:w,bmi,isObese:false,ibw:null};
+}
+
+// ================================================================
+//  UI CONTROLS
+// ================================================================
+function switchTab(t){
+  state.tab=t;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  updateModeButtons(); renderRefTable(); updateBMI(); reactiveCalc();
+}
+function setSex(s){
+  state.sex=s;
+  document.getElementById('sex-m').classList.toggle('active',s==='M');
+  document.getElementById('sex-f').classList.toggle('active',s==='F');
+  updateBMI(); reactiveCalc();
+}
+function setMode(m){
+  state.mode=m; updateModeButtons();
+  document.getElementById('adjust-inputs').classList.toggle('visible',m==='adjust');
+  reactiveCalc();
+}
+function updateModeButtons(){
+  const initBtn=document.getElementById('mode-init');
+  const adjBtn=document.getElementById('mode-adjust');
+  initBtn.className='mode-btn'+(state.mode==='init'?' sel-init':'');
+  adjBtn.className='mode-btn'+(state.mode==='adjust'?' sel-adj':'');
+}
+function setPrevMaintain(checked){
+  state.prevMaintain=checked;
+  reactiveCalc();
+}
+function updateBMI(){
+  const w=parseFloat(document.getElementById('weight').value);
+  const heightSexRow=document.getElementById('height-sex-row');
+  const b=document.getElementById('bmi-banner');
+  // Show height field only when weight suggests possible obesity
+  if(!w||w<20){heightSexRow.style.display='none';b.style.display='none';return;}
+  if(w>=100){
+    heightSexRow.style.display='block';
+  } else {
+    heightSexRow.style.display='none';
+    b.style.display='none';
+    return;
+  }
+  const h=parseFloat(document.getElementById('height').value);
+  if(!h||h<100){b.style.display='none';return;}
+  const info=getDosingWeight(w,h,state.sex);
+  b.style.display='block';
+  if(info.isObese){
+    b.className='bmi-banner obese';
+    b.innerHTML=`<span class="bmi-val">BMI ${info.bmi.toFixed(1)}</span> &gt; 40 &mdash; Using Adjusted Body Weight: <strong>${info.weight.toFixed(1)} kg</strong><br><small>IBW ${info.ibw.toFixed(1)} kg | ABW = IBW + 0.4 &times; (${w} &minus; ${info.ibw.toFixed(1)})</small>`;
+  } else {
+    b.className='bmi-banner normal';
+    b.innerHTML=`BMI <span class="bmi-val">${info.bmi.toFixed(1)}</span> &mdash; Using Actual Weight: <strong>${w} kg</strong>`;
+  }
+}
+
+// ================================================================
+//  REFERENCE TABLE
+// ================================================================
+function renderRefTable(highlightAptt){
+  const p=PROTOCOLS[state.tab];
+  document.getElementById('ref-table-title').textContent=p.name+' aPTT Adjustment Table';
+  const hd=['aPTT (s)','Bolus','Hold','Rate Change','Recheck'];
+  let html='<table class="ref-table"><thead><tr>';
+  hd.forEach(h=>html+=`<th>${h}</th>`);
+  html+='</tr></thead><tbody>';
+  p.tableRows.forEach((row,i)=>{
+    const adj=p.adjustments[i];
+    const hl=(highlightAptt!==undefined && highlightAptt>=adj.min && highlightAptt<adj.max)?'hl':'';
+    html+=`<tr class="${hl}">`;
+    row.forEach(cell=>html+=`<td>${cell}</td>`);
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  html+='<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">* Decrease to daily once 2 consecutive readings in therapeutic range.</div>';
+  document.getElementById('ref-table-container').innerHTML=html;
+}
+
+// ================================================================
+//  REACTIVE CALCULATION
+// ================================================================
+function reactiveCalc(){
+  const w=parseFloat(document.getElementById('weight').value);
+  const h=parseFloat(document.getElementById('height').value);
+  const rd=document.getElementById('results');
+  const ph=document.getElementById('placeholder');
+
+  if(!w||w<20||!state.mode){
+    rd.innerHTML=''; ph.style.display='block';
+    ph.innerHTML='<div class="ph-icon">&#8595;</div><div>Enter patient weight and select a mode</div>';
+    renderRefTable(); return;
+  }
+  if(state.mode==='adjust'){
+    const aptt=parseFloat(document.getElementById('aptt').value);
+    if(!aptt||aptt<15){
+      rd.innerHTML=''; ph.style.display='block';
+      ph.innerHTML='<div class="ph-icon">&#8693;</div><div>Enter current aPTT to see adjustment</div>';
+      renderRefTable(); return;
+    }
+  }
+
+  ph.style.display='none';
+  const p=PROTOCOLS[state.tab];
+  const info=getDosingWeight(w,h,state.sex);
+  const dw=info.weight;
+  let html='';
+
+  // ──────────────────────────────────────────
+  //  INITIATION
+  // ──────────────────────────────────────────
+  if(state.mode==='init'){
+    const bolusU=Math.min(Math.round(p.bolusPerKg*dw),p.bolusMax);
+    const bolusMl=(bolusU/p.bolusConc).toFixed(2);
+    const rateUhr=Math.round(p.startRate*dw);
+    const rateMlhr=(rateUhr/p.concentration).toFixed(1);
+    const capped=bolusU>=p.bolusMax;
+    let sn=0;
+
+    html+=`<div class="action-plan init-border">
+      <div class="ap-header init-bg">
+        <span class="mode-badge init-badge">INITIATION</span>
+        ${p.name} (${p.target})
+      </div>
+      <div class="plan-section">
+        <div class="ptl ptl-now">⚡ Do now</div>`;
+
+    // Step 1: Give IV bolus
+    sn++;
+    html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb">💉 Give IV bolus</div>
+            <div class="bolus-box">
+              <span class="bb-val">${bolusU.toLocaleString()}</span><span class="bb-unit"> units</span>
+              <div class="bb-sub">= ${bolusMl} mL undiluted (5,000 u/mL)${capped?' &nbsp;⚠️ Capped at max '+p.bolusMax.toLocaleString()+' units':''}</div>
+            </div>
+          </div>
+        </div>`;
+
+    // Step 2: Start infusion
+    sn++;
+    html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb">🚀 Start infusion</div>
+            <div class="rate-hero rh-init">
+              <div class="rh-val">${p.startRate}</div>
+              <div class="rh-unit">unit/kg/hr</div>
+              <div class="rh-pump">= ${rateMlhr} mL/hr on pump &nbsp;<small style="color:var(--text-muted)">(${rateUhr} u/hr)</small></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    // Recheck aPTT step (initiation)
+    sn++;
+    html+=`<div class="plan-section no-border">
+        <div class="plan-step">
+          <div class="sn sn-later">${sn}</div>
+          <div class="step-body">
+            <div class="recheck-pop">🔬 Recheck aPTT in 6 hours after initiation</div>
+            <div class="step-sub" style="margin-top:6px;">Do not draw from same limb receiving heparin</div>
+          </div>
+        </div>
+      </div>`;
+
+    // Calculation details (collapsible)
+    html+=`<details class="plan-calc">
+        <summary>Calculation details</summary>
+        <div class="plan-calc-inner">
+          <div class="detail-row"><span class="detail-label">Dosing weight</span><span class="detail-value">${dw.toFixed(1)} kg ${info.isObese?'(ABW)':'(actual)'}</span></div>
+          <div class="detail-row"><span class="detail-label">Bolus</span><span class="detail-value">${p.bolusPerKg} unit/kg &times; ${dw.toFixed(1)} kg<span class="sub">= ${bolusU.toLocaleString()} units${capped?' (capped)':''}</span></span></div>
+          <div class="detail-row"><span class="detail-label">Rate</span><span class="detail-value">${p.startRate} unit/kg/hr &times; ${dw.toFixed(1)} kg<span class="sub">= ${rateUhr} u/hr = ${rateMlhr} mL/hr</span></span></div>
+        </div>
+      </details>
+      <div class="copy-row-wrap">
+        <button class="copy-sheet-btn"
+          data-action="init"
+          data-aptt=""
+          data-hold="0"
+          data-newrate="${p.startRate}"
+          data-recheck="6"
+          data-remark="Initiation. Bolus: ${bolusU.toLocaleString()} units (${bolusMl} mL)${capped?' — capped':''}"
+          onclick="copySheetRow(this)">📋 Copy row for Heparin Chart</button>
+      </div>
+    </div>`;
+
+    renderRefTable();
+
+  // ──────────────────────────────────────────
+  //  ADJUSTMENT
+  // ──────────────────────────────────────────
+  } else {
+    const aptt=parseFloat(document.getElementById('aptt').value);
+    const curRate=parseFloat(document.getElementById('current-rate').value);
+    const hasCurRate=curRate>0 && !isNaN(curRate);
+    const adj=p.adjustments.find(a=>aptt>=a.min&&aptt<a.max)||p.adjustments[p.adjustments.length-1];
+    const hasHold=adj.stop>0;
+    const hasBolus=adj.bolus>0;
+    const hasRateChange=adj.rc!==0;
+
+    // Pre-calculate new rate (if we have current rate)
+    let newRateClamped=null,newRateUhr=null,newRateMlhr=null,newRateNeg=false;
+    if(hasCurRate && hasRateChange){
+      const nr=curRate+adj.rc;
+      newRateNeg=nr<0;
+      newRateClamped=Math.max(0,nr);
+      newRateUhr=Math.round(newRateClamped*dw);
+      newRateMlhr=(newRateUhr/p.concentration).toFixed(1);
+    }
+
+    // Rate hero HTML (reused in both "do now" and "after hold" steps)
+    // Guard: newRateClamped is only set when hasCurRate AND hasRateChange are both true
+    const rateHeroHtml=(hasCurRate && hasRateChange && newRateClamped!==null)
+      ? `<div class="rate-hero rh-adj">
+          <div class="rh-val">${newRateClamped.toFixed(1)}</div>
+          <div class="rh-unit">unit/kg/hr</div>
+          <div class="rh-pump">= ${newRateMlhr} mL/hr on pump &nbsp;<small style="color:var(--text-muted)">(${newRateUhr} u/hr)</small></div>
+          <div class="rh-from">${curRate} ${adj.rc>0?'⬆️':'⬇️'} ${newRateClamped.toFixed(1)} unit/kg/hr &nbsp;(${adj.rc>0?'+':''}${adj.rc} unit/kg/hr)</div>
+        </div>${newRateNeg?'<div style="margin-top:6px;font-size:12px;color:var(--danger);font-weight:600;">⚠️ Rate below zero &mdash; consider stopping infusion</div>':''}`
+      : `<div class="rate-hint">Enter current rate above to calculate the new absolute rate
+          <div class="rh-delta">${adj.rc>0?'+':''}${adj.rc} unit/kg/hr from current rate</div>
+        </div>`;
+
+    let sn=0;
+
+    html+=`<div class="action-plan adj-border">
+      <div class="ap-header adj-bg">
+        <span class="mode-badge adj-badge">ADJUSTMENT</span>
+        ${p.name} | aPTT ${aptt}s
+      </div>
+      <div class="plan-section">
+        <div class="ptl ptl-now">⚡ Do now</div>`;
+
+    // Step: re-bolus (subtherapeutic bands only)
+    if(hasBolus){
+      sn++;
+      const bU=Math.min(Math.round(adj.bolus*dw),adj.bolusMax);
+      const bMl=(bU/p.bolusConc).toFixed(2);
+      const bCapped=bU>=adj.bolusMax;
+      html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb">💉 Give re-bolus</div>
+            <div class="bolus-box">
+              <span class="bb-val">${bU.toLocaleString()}</span><span class="bb-unit"> units</span>
+              <div class="bb-sub">= ${bMl} mL undiluted (5,000 u/mL)${bCapped?' &nbsp;⚠️ Capped at max '+adj.bolusMax.toLocaleString()+' units':''}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Step: stop infusion (hold bands)
+    if(hasHold){
+      sn++;
+      html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb sv-stop">${adj.stop>=60?'🛑':'⏸️'} Stop infusion now</div>
+            <div class="step-sub">Hold for ${adj.stop} minutes</div>
+          </div>
+        </div>`;
+    }
+
+    // Step: set new rate NOW (no-hold bands only — hold bands get rate change after hold)
+    if(hasRateChange && !hasHold){
+      sn++;
+      html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb ${adj.rc>0?'sv-increase':'sv-decrease'}">${adj.rc>0?'⬆️':'⬇️'} Set new rate</div>
+            ${rateHeroHtml}
+          </div>
+        </div>`;
+    }
+
+    // Step: maintain (no rate change)
+    if(!hasRateChange){
+      sn++;
+      let maintainBody='';
+      if(hasCurRate){
+        const mUhr=Math.round(curRate*dw);
+        const mMlhr=(mUhr/p.concentration).toFixed(1);
+        maintainBody=`<div class="rate-hero rh-maintain">
+          <div class="rh-val">${curRate.toFixed(1)}</div>
+          <div class="rh-unit">unit/kg/hr</div>
+          <div class="rh-pump">= ${mMlhr} mL/hr on pump &nbsp;<small style="color:var(--text-muted)">(${mUhr} u/hr)</small></div>
+        </div>`;
+      }
+      html+=`<div class="plan-step">
+          <div class="sn sn-now">${sn}</div>
+          <div class="step-body">
+            <div class="step-verb sv-maintain">✅ No rate change needed</div>
+            ${maintainBody}
+          </div>
+        </div>`;
+    }
+
+    html+=`</div>`; // end plan-section DO NOW
+
+    // After hold: restart at new rate
+    if(hasHold){
+      sn++;
+      html+=`<div class="plan-section">
+          <div class="ptl ptl-later">⏱ In ${adj.stop} min — After hold</div>
+          <div class="plan-step">
+            <div class="sn sn-later">${sn}</div>
+            <div class="step-body">
+              <div class="step-verb sv-decrease">⬇️ Restart at new rate</div>
+              ${rateHeroHtml}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Recheck aPTT (always last)
+    // If current AND previous check were both MAINTAIN → switch to daily per protocol
+    const recheckDaily = !hasRateChange && !hasHold && state.prevMaintain;
+    // Build the full recheck label in one line (timing folded in)
+    let recheckVerb;
+    if(recheckDaily){
+      recheckVerb = '🔬 Recheck aPTT daily';
+    } else if(hasHold){
+      recheckVerb = `🔬 Recheck aPTT in ${adj.hrs} hours after restart`;
+    } else if(hasRateChange){
+      recheckVerb = `🔬 Recheck aPTT in ${adj.hrs} hours after rate change`;
+    } else {
+      recheckVerb = `🔬 Recheck aPTT in ${adj.hrs} hours`;
+    }
+    sn++;
+    html+=`<div class="plan-section no-border">
+        <div class="plan-step">
+          <div class="sn sn-later">${sn}</div>
+          <div class="step-body">
+            <div class="${recheckDaily?'recheck-daily':'recheck-pop'}">${recheckVerb}</div>
+            <div class="step-sub" style="margin-top:6px;">Do not draw from same limb receiving heparin${recheckDaily?'<br><span class="daily-note">✅ 2 consecutive MAINTAIN — protocol allows daily aPTT</span>':''}</div>
+          </div>
+        </div>
+      </div>`;
+
+    // Safety warning (significantly elevated aPTT)
+    if(aptt>105){
+      html+=`<div class="plan-section" style="border-top:1px solid var(--border);">
+          <div class="safety-note warn" style="margin:0;">
+            <strong>⚠️ Significantly elevated aPTT</strong><br>
+            a. Exclude spurious reading &mdash; repeat from peripheral venipuncture<br>
+            b. Verify UFH concentration and rate are correct
+          </div>
+        </div>`;
+    }
+
+    // Calculation details (collapsible)
+    html+=`<details class="plan-calc">
+        <summary>Calculation details</summary>
+        <div class="plan-calc-inner">
+          <div class="detail-row"><span class="detail-label">Dosing weight</span><span class="detail-value">${dw.toFixed(1)} kg ${info.isObese?'(ABW)':'(actual)'}</span></div>`;
+    if(hasRateChange){
+      html+=`<div class="detail-row"><span class="detail-label">Rate change</span><span class="detail-value">${Math.abs(adj.rc)} unit/kg/hr &times; ${dw.toFixed(1)} kg = ${Math.abs(Math.round(adj.rc*dw))} u/hr</span></div>`;
+    }
+    if(hasCurRate){
+      html+=`<div class="detail-row"><span class="detail-label">Current rate entered</span><span class="detail-value">${curRate} unit/kg/hr</span></div>`;
+    }
+
+    // Build copy button data — columns match NUH Heparin Chart (NSG-FORM-GEN-064)
+    const copyBolus=hasBolus?Math.min(Math.round(adj.bolus*dw),adj.bolusMax):'';
+    const copyBolusvol=hasBolus?(Math.min(Math.round(adj.bolus*dw),adj.bolusMax)/p.bolusConc).toFixed(2):'';
+    const copyBolusCapped=hasBolus&&(Math.min(Math.round(adj.bolus*dw),adj.bolusMax)>=adj.bolusMax);
+    const copyNewRate=hasCurRate&&hasRateChange?newRateClamped.toFixed(1):(hasCurRate&&!hasRateChange?curRate.toFixed(1):'');
+    const copyAction=hasHold?'hold':!hasRateChange?'maintain':adj.rc>0?'increase':'decrease';
+    let copyRemark='';
+    if(hasBolus&&copyBolus!==''){
+      copyRemark=`Re-bolus: ${Number(copyBolus).toLocaleString()} units (${copyBolusvol} mL undiluted${copyBolusCapped?' — capped':''})`;
+    } else if(recheckDaily){
+      copyRemark='2nd consecutive MAINTAIN';
+    } else if(!hasRateChange){
+      copyRemark='MAINTAIN';
+    }
+    const copyRecheck=recheckDaily?'daily':String(adj.hrs);
+
+    html+=`</div>
+      </details>
+      <div class="copy-row-wrap">
+        <button class="copy-sheet-btn"
+          data-action="${copyAction}"
+          data-aptt="${aptt}"
+          data-hold="${adj.stop||0}"
+          data-newrate="${copyNewRate}"
+          data-recheck="${copyRecheck}"
+          data-remark="${copyRemark}"
+          onclick="copySheetRow(this)">📋 Copy row for Heparin Chart</button>
+      </div>
+    </div>`;
+
+    renderRefTable(aptt);
+  }
+
+  rd.innerHTML=html;
+}
+
+// ================================================================
+//  COPY TO SPREADSHEET
+//  Column order matches NUH Heparin Infusion Monitoring Chart (NSG-FORM-GEN-064):
+//  DATE | TIME (blood draw) | APTT (s) | Stop infusion (mins)
+//  | Stop time of infusion | Start time of titrated dose | Dose (unit/kg/hr)
+//  | Name/Sign RN1 | Name/Sign RN2 | Date/Time to check next APTT | Remarks
+// ================================================================
+function copySheetRow(btn){
+  const now=new Date();
+  const hold=parseInt(btn.dataset.hold||'0');
+  const recheckVal=btn.dataset.recheck; // 'daily' | '6' | '4'
+  const action=btn.dataset.action;      // 'init' | 'increase' | 'decrease' | 'maintain' | 'hold'
+
+  // Time helpers
+  const addMins=(d,m)=>new Date(d.getTime()+m*60000);
+  const addHrs=(d,h)=>new Date(d.getTime()+h*3600000);
+  const fmtDate=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const fmtTime=d=>d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const fmtDT=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+fmtTime(d);
+
+  // Col 1: DATE
+  const colDate=fmtDate(now);
+
+  // Col 2: TIME (of blood draw, or time of initiation)
+  const colTime=fmtTime(now);
+
+  // Col 3: APTT (s)
+  const colAptt=btn.dataset.aptt?btn.dataset.aptt:'';
+
+  // Col 4: Stop infusion (mins)
+  const colStopMins=hold>0?String(hold):'';
+
+  // Col 5: Stop time of infusion
+  const colStopTime=hold>0?fmtTime(now):'';
+
+  // Col 6: Start time of titrated dose
+  // MAINTAIN: blank (no new dose); hold: now + hold mins; all others: now
+  let colStartTime='';
+  if(action==='maintain'){
+    colStartTime='';
+  } else if(hold>0){
+    colStartTime=fmtTime(addMins(now,hold));
+  } else {
+    colStartTime=fmtTime(now);
+  }
+
+  // Col 7: Dose (unit/kg/hr)
+  const colDose=btn.dataset.newrate?btn.dataset.newrate:'';
+
+  // Col 10: Date/Time to check next APTT
+  let colNextAptt='';
+  if(recheckVal==='daily'){
+    colNextAptt='Daily';
+  } else {
+    const hrs=parseInt(recheckVal);
+    const base=hold>0?addMins(now,hold):now;
+    colNextAptt=fmtDT(addHrs(base,hrs));
+  }
+
+  // Col 11: Remarks
+  const colRemark=btn.dataset.remark||'';
+
+  // Tab-separated — paste directly into Google Sheets
+  const cols=[
+    colDate,      // DATE
+    colTime,      // TIME (of blood draw)
+    colAptt,      // APTT (s)
+    colStopMins,  // Stop infusion (mins)
+    colStopTime,  // Stop time of infusion
+    colStartTime, // Start time of titrated dose
+    colDose,      // Dose (unit/kg/hr)
+    '',           // Name/Sign of RN1
+    '',           // Name/Sign of RN2
+    colNextAptt,  // Date/Time to check next APTT
+    colRemark     // Remarks
+  ];
+  const tsv=cols.join('\t');
+
+  const doCopy=(text)=>{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text);
+    }
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    return Promise.resolve();
+  };
+
+  const origHtml=btn.innerHTML;
+  doCopy(tsv).then(()=>{
+    btn.classList.add('copied');
+    btn.textContent='✅ Copied! Paste into Heparin Chart';
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=origHtml;},2500);
+  }).catch(()=>{
+    btn.textContent='⚠️ Copy failed — try long-pressing';
+    setTimeout(()=>{btn.innerHTML=origHtml;},2500);
+  });
+}
+
+// ================================================================
+//  EVENT LISTENERS
+// ================================================================
+['weight','height','aptt','current-rate'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    if(id==='weight'||id==='height') updateBMI();
+    reactiveCalc();
+  });
+});
+
+// ================================================================
+//  INIT
+// ================================================================
+renderRefTable();
+</script>
+</body>
+</html>
